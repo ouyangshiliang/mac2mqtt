@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -17,18 +18,26 @@ import (
 )
 
 var hostname string
+var topic string
 
 type config struct {
 	Ip       string `yaml:"mqtt_ip"`
 	Port     string `yaml:"mqtt_port"`
 	User     string `yaml:"mqtt_user"`
 	Password string `yaml:"mqtt_password"`
+	Topic    string `yaml:"mqtt_topic"`
 	Hostname string `yaml:"hostname"`
 }
 
 func (c *config) getConfig() *config {
 
-	configContent, err := os.ReadFile("mac2mqtt.yaml")
+	ex, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	exPath := filepath.Dir(ex)
+
+	configContent, err := os.ReadFile(exPath + "/mac2mqtt.yaml")
 	if err != nil {
 		log.Fatal("No config file provided")
 	}
@@ -46,13 +55,6 @@ func (c *config) getConfig() *config {
 		log.Fatal("Must specify mqtt_port in mac2mqtt.yaml")
 	}
 
-	if c.User == "" {
-		log.Fatal("Must specify mqtt_user in mac2mqtt.yaml")
-	}
-
-	if c.Password == "" {
-		log.Fatal("Must specify mqtt_password in mac2mqtt.yaml")
-	}
 	if c.Hostname == "" {
 		log.Fatal("must specify a hostname in mac2mqtt.yaml")
 	}
@@ -190,8 +192,12 @@ func getMQTTClient(ip, port, user, password string) mqtt.Client {
 
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(fmt.Sprintf("tcp://%s:%s", ip, port))
-	opts.SetUsername(user)
-	opts.SetPassword(password)
+	if user != "" {
+		opts.SetUsername(user)
+	}
+	if password != "" {
+		opts.SetPassword(password)
+	}
 	opts.OnConnect = connectHandler
 	opts.OnConnectionLost = connectLostHandler
 
@@ -206,7 +212,7 @@ func getMQTTClient(ip, port, user, password string) mqtt.Client {
 }
 
 func getTopicPrefix() string {
-	return "mac2mqtt/" + hostname
+	return topic
 }
 
 func listen(client mqtt.Client, topic string) {
@@ -334,6 +340,12 @@ func main() {
 
 	var c config
 	c.getConfig()
+
+	if c.Topic == "" {
+		topic = "mac2mqtt/" + hostname
+	} else {
+		topic = c.Topic
+	}
 
 	hostname = c.Hostname
 	var wg sync.WaitGroup
