@@ -1,8 +1,11 @@
-# Mac2MQTT (updated)
+# Mac2MQTT
 
 `mac2mqtt` is a program that allows viewing and controlling some aspects of computers running macOS via MQTT.
 
-This repo is a fork of bessarabov/mac2mqtt, that fixes bugs and adds features.
+This repo is a fork of bessarabov/mac2mqtt, that fixes bugs and adds some possibilities for the config.yaml (in example login without password).
+Furthermore. The commands topic for displaywake or sleep is conform to the home assistant mqtt topic with /set, see below.
+
+---
 
 It publishes to MQTT:
 
@@ -131,33 +134,17 @@ You can send integer numbers from 0 (inclusive) to 100 (inclusive) to this topic
 You can send `true` or `false` to this topic. When you send `true` the computer is muted. When you send `false` the computer
 is unmuted.
 
-### PREFIX + `/command/sleep`
-
-You can send  `sleep` to this topic, and it will put the computer to sleep. Sending other values will do nothing.
-
-### PREFIX + `/command/shutdown`
-
-You can send `shutdown` to this topic. It will try to shut down the computer. The way it is done depends on
-the user who ran the program. If the program is run by `root` the computer will shut down, but if it is run by an ordinary user
-the computer will not shut down if there is another user who logged in.
-
-Sending some other value but `shutdown` will do nothing.
-
-### PREFIX + `/command/displaysleep`
-
-You can send `displaysleep` to this topic. It will turn off the display. Sending some other value will do nothing.
-
 ### PREFIX + `/command/runshortcut`
 
 You can send the name of a shortcut to this topic. It will run this shortcut in the Shortcuts app.
 
-### PREFIX + `/command/displaywake`
-
-You can send `displaywake` to this topic. It will turn on the display. Sending some other value will do nothing.
-
-### PREFIX + `/command/screensaver`
+### PREFIX + `/command/set`
 
 You can send `screensaver` to this topic. It will turn start your screensaver. Sending some other value will do nothing.
+You can send `displaywake` to this topic. It will turn on the display. Sending some other value will do nothing.
+You can send  `sleep` to this topic, and it will put the computer to sleep. Sending other values will do nothing.
+You can send `shutdown` to this topic. It will try to shut down the computer. The way it is done depends on the user who ran the program. If the program is run by `root` the computer will shut down, but if it is run by an ordinary user the computer will not shut down if there is another user who logged in. Sending some other value but `shutdown` will do nothing.
+You can send `displaysleep` to this topic. It will turn off the display. Sending some other value will do nothing.
 
 ## Building
 
