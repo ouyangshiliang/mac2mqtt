@@ -141,10 +141,15 @@ You can send the name of a shortcut to this topic. It will run this shortcut in 
 ### PREFIX + `/command/set`
 
 You can send `screensaver` to this topic. It will turn start your screensaver. Sending some other value will do nothing.
+
 You can send `displaywake` to this topic. It will turn on the display. Sending some other value will do nothing.
+
 You can send  `sleep` to this topic, and it will put the computer to sleep. Sending other values will do nothing.
+
 You can send `shutdown` to this topic. It will try to shut down the computer. The way it is done depends on the user who ran the program. If the program is run by `root` the computer will shut down, but if it is run by an ordinary user the computer will not shut down if there is another user who logged in. Sending some other value but `shutdown` will do nothing.
+
 You can send `displaysleep` to this topic. It will turn off the display. Sending some other value will do nothing.
+
 
 ## Building
 
