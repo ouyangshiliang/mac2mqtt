@@ -118,7 +118,7 @@ func getCurrentVolume() int {
 }
 
 func getCurrentLock() int {
-	output := getCommandOutput(/usr/libexec/PlistBuddy -c "print :IOConsoleUsers:0:CGSSessionScreenIsLocked" /dev/stdin <<< "$(ioreg -n Root -d1 -a 2>/dev/null)" | grep -q true)
+	output := getCommandOutput("/usr/libexec/PlistBuddy -c "print :IOConsoleUsers:0:CGSSessionScreenIsLocked" /dev/stdin <<< "$(ioreg -n Root -d1 -a 2>/dev/null)" | grep -q true")
 
 	l, err := strconv.ParseBool(output)
 	if err != nil {
