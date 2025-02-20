@@ -117,6 +117,16 @@ func getCurrentVolume() int {
 	return i
 }
 
+func getCurrentLock() int {
+	output := getCommandOutput([ "$(/usr/libexec/PlistBuddy -c "print :IOConsoleUsers:0:CGSSessionScreenIsLocked" /dev/stdin 2>/dev/null <<< "$(ioreg -n Root -d1 -a)")" = "true" ] && echo true || echo false;)
+
+	l, err := strconv.ParseBool(output)
+	if err != nil {
+	}
+
+	return l
+}
+
 func runCommand(name string, arg ...string) {
 	cmd := exec.Command(name, arg...)
 
@@ -293,6 +303,11 @@ func updateVolume(client mqtt.Client) {
 
 func updateMute(client mqtt.Client) {
 	token := client.Publish(getTopicPrefix()+"/status/mute", 0, false, strconv.FormatBool(getMuteStatus()))
+	token.Wait()
+}
+
+func updateLock(client mqtt.Client) {
+	token := client.Publish(getTopicPrefix()+"/status/lock", 0, false, strconv.FormatBool(getCurrentLock()))
 	token.Wait()
 }
 
