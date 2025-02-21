@@ -122,21 +122,11 @@ func getCurrentLock() bool {
 	ioregCmd := exec.Command("ioreg", "-n", "Root", "-d1", "-a")
 	var ioregOut bytes.Buffer
 	ioregCmd.Stdout = &ioregOut
-	if err := ioregCmd.Run(); err != nil {
-		fmt.Println("Error running ioreg:", err)
-		return
-	}
-	return
 	// 使用 `PlistBuddy` 命令解析 plist 并获取屏幕锁定状态
 	plistBuddyCmd := exec.Command("/usr/libexec/PlistBuddy", "-c", "print :IOConsoleUsers:0:CGSSessionScreenIsLocked", "stdin")
 	plistBuddyCmd.Stdin = &ioregOut
 	var plistBuddyOut bytes.Buffer
 	plistBuddyCmd.Stdout = &plistBuddyOut
-	if err := plistBuddyCmd.Run(); err != nil {
-		fmt.Println("Error running PlistBuddy:", err)
-		return
-	}
-	return
 	l, err := strconv.ParseBool(plistBuddyCmd.Stdout)
 	if err != nil {
 	}
