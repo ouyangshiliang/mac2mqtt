@@ -31,7 +31,7 @@ jobs:
       run: go test -v ./...
       
     - name: Upload Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: build-output
         path: ./...  # 假设你的构建输出在 build 目录下
