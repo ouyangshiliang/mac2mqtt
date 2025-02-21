@@ -127,7 +127,8 @@ func getCurrentLock() bool {
 	plistBuddyCmd.Stdin = &ioregOut
 	var plistBuddyOut bytes.Buffer
 	plistBuddyCmd.Stdout = &plistBuddyOut
-	l, err := strconv.ParseBool(plistBuddyCmd.Stdout)
+	output := strings.TrimSpace（plistBuddyOut.String()）
+	l, err := strconv.ParseBool(output)
 	if err != nil {
 	}
 	return l
