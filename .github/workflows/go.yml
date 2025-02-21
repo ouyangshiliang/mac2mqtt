@@ -34,4 +34,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: build-output
-        path: bessarabov/mac2mqtt  # 假设你的构建输出在 build 目录下
+        path: /home/runner/work/mac2mqtt/mac2mqtt  # 假设你的构建输出在 build 目录下
