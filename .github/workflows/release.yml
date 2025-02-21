@@ -1,4 +1,4 @@
-# .github/workflows/release.yml
+## .github/workflows/release.yml
 name: goreleaser
 
 on:
