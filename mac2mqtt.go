@@ -137,7 +137,6 @@ func getCurrentLock() bool {
 		fmt.Println("Error running PlistBuddy:", err)
 		return
 	}	
-
 	l, err := strconv.ParseBool(plistBuddyCmd.Stdout)
 	if err != nil {
 	}
