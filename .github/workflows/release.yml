@@ -1,4 +1,4 @@
-## .github/workflows/release.yml
+# .github/workflows/release.yml
 name: goreleaser
 
 on:
@@ -27,7 +27,7 @@ jobs:
         with:
           go-version: stable
       # More assembly might be required: Docker logins, GPG, etc.
-      # It all depends on your needs.
+      # It all depends on your needs. test
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
