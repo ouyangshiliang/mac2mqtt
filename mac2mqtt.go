@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 	"bytes"
-	"fmt"
 
 	"gopkg.in/yaml.v2"
 
@@ -120,7 +119,7 @@ func getCurrentVolume() int {
 }
 
 
-func getCurrentLock() int {
+func getCurrentLock() bool {
 	// 使用 `ioreg` 命令获取 Root 信息
 	ioregCmd := exec.Command("ioreg", "-n", "Root", "-d1", "-a")
 	var ioregOut bytes.Buffer
