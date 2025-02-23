@@ -2,17 +2,18 @@ package main
 
 import (
 	"fmt"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 	"bytes"
-	"gopkg.in/yaml.v2"
+
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
@@ -31,13 +32,7 @@ type config struct {
 
 func (c *config) getConfig() *config {
 
-	ex, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-	exPath := filepath.Dir(ex)
-
-	configContent, err := os.ReadFile(exPath + "/mac2mqtt.yaml")
+	configContent, err := ioutil.ReadFile("mac2mqtt.yaml")
 	if err != nil {
 		log.Fatal("No config file provided")
 	}
@@ -53,6 +48,18 @@ func (c *config) getConfig() *config {
 
 	if c.Port == "" {
 		log.Fatal("Must specify mqtt_port in mac2mqtt.yaml")
+	}
+
+	if c.User == "" {
+		log.Fatal("Must specify mqtt_user in mac2mqtt.yaml")
+	}
+
+	if c.Password == "" {
+		log.Fatal("Must specify mqtt_password in mac2mqtt.yaml")
+	}
+
+	if c.Topic == "" {
+		log.Fatal("Must specify mqtt_topic in mac2mqtt.yaml")
 	}
 
 	if c.Hostname == "" {
@@ -85,10 +92,10 @@ func getHostname() string {
 
 func getCommandOutput(name string, arg ...string) string {
 	cmd := exec.Command(name, arg...)
-
 	stdout, err := cmd.Output()
 	if err != nil {
 		log.Fatal(err)
+		log.Println("Cmd err:")
 	}
 
 	stdoutStr := string(stdout)
@@ -102,6 +109,7 @@ func getMuteStatus() bool {
 
 	b, err := strconv.ParseBool(output)
 	if err != nil {
+		log.Fatal(err)
 	}
 
 	return b
@@ -112,36 +120,46 @@ func getCurrentVolume() int {
 
 	i, err := strconv.Atoi(output)
 	if err != nil {
+		log.Fatal(err)
 	}
 
 	return i
 }
 
 func getCurrentLock() bool {
-	// 使用 `ioreg` 命令获取 Root 信息
-	ioregCmd := exec.Command("ioreg", "-n", "Root", "-d1", "-a")
-	var ioregOut bytes.Buffer
-	ioregCmd.Stdout = &ioregOut
-	// 使用 `PlistBuddy` 命令解析 plist 并获取屏幕锁定状态
-	plistBuddyCmd := exec.Command("/usr/libexec/PlistBuddy", "-c", "print :IOConsoleUsers:0:CGSSessionScreenIsLocked", "stdin")
-	plistBuddyCmd.Stdin = &ioregOut
-	var plistBuddyOut bytes.Buffer
-	plistBuddyCmd.Stdout = &plistBuddyOut
-	output := strings.TrimSpace(plistBuddyOut.String())
-	l, err := strconv.ParseBool(output)
+	    // 构建要执行的命令字符串
+    cmdStr := `/usr/libexec/PlistBuddy -c "print :IOConsoleUsers:0:CGSSessionScreenIsLocked" /dev/stdin 2>/dev/null <<< "$(ioreg -n Root -d1 -a)"`
+    // 使用/bin/sh -c来执行包含shell特性的命令
+    cmd := exec.Command("/bin/sh", "-c", cmdStr)
+    // 捕获命令的输出
+    var out bytes.Buffer
+    cmd.Stdout = &out
+    // 忽略命令的错误输出
+    cmd.Stderr = nil
+    // 运行命令
+    err := cmd.Run()
+    if err != nil {
+        return false
+    }
+	  result := strings.TrimSpace(out.String())
+
+	// 将字符串转换为布尔值
+	l, err := strconv.ParseBool(result)
 	if err != nil {
+		return false // 如果转换失败，返回错误
 	}
-	return l
+	  	return l // 返回屏幕锁定状态和nil错误（表示成功）
 }
-
-
-
-
-
 
 func runCommand(name string, arg ...string) {
 	cmd := exec.Command(name, arg...)
-
+/*    //start
+    var cmdStdout bytes.Buffer
+    var cmdStderr bytes.Buffer
+    cmd.Stdout = &cmdStdout
+    cmd.Stderr = &cmdStderr
+    log.Println("Stdout:"  + cmdStdout.String()  + ", Stderr from cmd:" + cmdStderr.String())
+    //end*/
 	_, err := cmd.Output()
 	if err != nil {
 		log.Fatal(err)
@@ -159,24 +177,20 @@ func setMute(b bool) {
 	runCommand("/usr/bin/osascript", "-e", "set volume output muted "+strconv.FormatBool(b))
 }
 
+func setLock() {
+	runCommand("pmset", "displaysleepnow")
+}
+
+func setUnlock() {
+	runCommand("/usr/bin/caffeinate", "-u", "-t", "1")
+}
+
 func commandSleep() {
 	runCommand("pmset", "sleepnow")
 }
 
 func commandDisplaySleep() {
 	runCommand("pmset", "displaysleepnow")
-}
-
-func commandShutdown() {
-
-	if os.Getuid() == 0 {
-		// if the program is run by root user we are doing the most powerfull shutdown - that always shuts down the computer
-		runCommand("shutdown", "-h", "now")
-	} else {
-		// if the program is run by ordinary user we are trying to shutdown, but it may fail if the other user is logged in
-		runCommand("/usr/bin/osascript", "-e", "tell app \"System Events\" to shut down")
-	}
-
 }
 
 func commandDisplayWake() {
@@ -189,6 +203,18 @@ func commandRunShortcut(shortcut string) {
 
 func commandScreensaver() {
 	runCommand("open", "-a", "ScreenSaverEngine")
+}
+
+func commandShutdown() {
+
+	if os.Getuid() == 0 {
+		// if the program is run by root user we are doing the most powerfull shutdown - that always shuts down the computer
+		runCommand("shutdown", "-h", "now")
+	} else {
+		// if the program is run by ordinary user we are trying to shutdown, but it may fail if the other user is logged in
+		runCommand("/usr/bin/osascript", "-e", "tell app \"System Events\" to shut down")
+	}
+
 }
 
 var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
@@ -214,12 +240,8 @@ func getMQTTClient(ip, port, user, password string) mqtt.Client {
 
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(fmt.Sprintf("tcp://%s:%s", ip, port))
-	if user != "" {
-		opts.SetUsername(user)
-	}
-	if password != "" {
-		opts.SetPassword(password)
-	}
+	opts.SetUsername(user)
+	opts.SetPassword(password)
 	opts.OnConnect = connectHandler
 	opts.OnConnectionLost = connectLostHandler
 
@@ -272,32 +294,44 @@ func listen(client mqtt.Client, topic string) {
 
 		}
 
-		if msg.Topic() == getTopicPrefix()+"/command/set" {
+		if msg.Topic() == getTopicPrefix()+"/command/lock" {
+
+			//l, err := strconv.ParseBool(string(msg.Payload()))
+			if string(msg.Payload()) == "lock" {
+				setLock()
+				updateVolume(client)
+				updateMute(client)
+				updateLock(client)
+
+			} else {
+				setUnlock()
+				//log.Println("Incorrect value")
+			}
+
+		}
+
+		if msg.Topic() == getTopicPrefix()+"/command/sleep" {
 
 			if string(msg.Payload()) == "sleep" {
 				commandSleep()
 			}
 
+		}
+
+		if msg.Topic() == getTopicPrefix()+"/command/displaysleep" {
+
 			if string(msg.Payload()) == "displaysleep" {
 				commandDisplaySleep()
 			}
 
-			if string(msg.Payload()) == "displaywake" {
-				commandDisplayWake()
-			}
+		}
+
+		if msg.Topic() == getTopicPrefix()+"/command/shutdown" {
 
 			if string(msg.Payload()) == "shutdown" {
 				commandShutdown()
 			}
 
-			if string(msg.Payload()) == "screensaver" {
-				commandScreensaver()
-			}
-
-		}
-
-		if msg.Topic() == getTopicPrefix()+"/command/runshortcut" {
-			commandRunShortcut(string(msg.Payload()))
 		}
 
 	})
@@ -359,10 +393,13 @@ func main() {
 	}
 
 	hostname = c.Hostname
+
 	var wg sync.WaitGroup
+
+	//hostname = getHostname()
 	mqttClient := getMQTTClient(c.Ip, c.Port, c.User, c.Password)
 
-	volumeTicker := time.NewTicker(60 * time.Second)
+	volumeTicker := time.NewTicker(2 * time.Second)
 	batteryTicker := time.NewTicker(60 * time.Second)
 
 	wg.Add(1)
@@ -372,6 +409,7 @@ func main() {
 			case _ = <-volumeTicker.C:
 				updateVolume(mqttClient)
 				updateMute(mqttClient)
+				updateLock(mqttClient)
 
 			case _ = <-batteryTicker.C:
 				updateBattery(mqttClient)
