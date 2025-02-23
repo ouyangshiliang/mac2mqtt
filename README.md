@@ -12,6 +12,7 @@ It publishes to MQTT:
  * current volume
  * volume mute state
  * battery charge percent
+ * system lock status
 
 
 You can send topics to:
@@ -36,7 +37,7 @@ Edit `mac2mqtt.yaml` (the sample file is in this repository), make binary execut
     $ ./mac2mqtt
     2021/04/12 10:37:28 Started
     2021/04/12 10:37:29 Connected to MQTT
-    2021/04/12 10:37:29 Sending 'true' to topic: mac2mqtt/bessarabov-osx/status/alive
+    2021/04/12 10:37:29 Sending 'true' to topic: iot/macmini/status/alive
 
 ## Running in the background
 
@@ -59,49 +60,49 @@ And run:
 
 ```yaml
 script:
-  air2_sleep:
+  macmini_sleep:
     icon: mdi:laptop
     sequence:
       - service: mqtt.publish
         data:
-          topic: "mac2mqtt/bessarabov-osx/command/sleep"
+          topic: "iot/macmini/command/sleep"
           payload: "sleep"
 
-  air2_shutdown:
+  macmini_shutdown:
     icon: mdi:laptop
     sequence:
       - service: mqtt.publish
         data:
-          topic: "mac2mqtt/bessarabov-osx/command/shutdown"
+          topic: "iot/macmini/command/shutdown"
           payload: "shutdown"
 
-  air2_displaysleep:
+  macmini_displaysleep:
     icon: mdi:laptop
     sequence:
       - service: mqtt.publish
         data:
-          topic: "mac2mqtt/bessarabov-osx/command/displaysleep"
+          topic: "iot/macmini/command/displaysleep"
           payload: "displaysleep"
 
 mqtt:
   sensor:
-    - name: air2_alive
+    - name: macmini_alive
       icon: mdi:laptop
-      state_topic: "mac2mqtt/bessarabov-osx/status/alive"
+      state_topic: "iot/macmini/status/alive"
 
-    - name: "air2_battery"
+    - name: "macmini_battery"
       icon: mdi:battery-high
       unit_of_measurement: "%"
-      state_topic: "mac2mqtt/bessarabov-osx/status/battery"
+      state_topic: "iot/macmini/status/battery"
 ```
 
 ## MQTT topics structure
 
-The program is working with several MQTT topics. All topics are prefixed with `mac2mqtt` + `COMPUTER_NAME`.
-For example, the topic with the current volume on my machine is `mac2mqtt/bessarabov-osx/status/volume`
+The program is working with several MQTT topics. All topics are prefixed with mqtt_topic or `mac2mqtt` + `COMPUTER_NAME`.
+For example, the topic with the current volume on my machine is `iot/macmini/status/volume`
 
-`mac2mqtt` send info to the topics `mac2mqtt/COMPUTER_NAME/status/#` and listen for commands in topics
-`mac2mqtt/COMPUTER_NAME/command/#`.
+`mac2mqtt` send info to the topics `iot/macmini/status/#` and listen for commands in topics
+`ot/macmini/command/#`.
 
 ### PREFIX + `/status/alive`
 
@@ -134,6 +135,11 @@ You can send integer numbers from 0 (inclusive) to 100 (inclusive) to this topic
 You can send `true` or `false` to this topic. When you send `true` the computer is muted. When you send `false` the computer
 is unmuted.
 
+### PREFIX + `/command/lock`
+
+You can send `true` or `false` to this topic. When you send `true` the computer is locked. When you send `false` the computer
+is unlocked.
+
 ### PREFIX + `/command/runshortcut`
 
 You can send the name of a shortcut to this topic. It will run this shortcut in the Shortcuts app.
@@ -149,6 +155,8 @@ You can send  `sleep` to this topic, and it will put the computer to sleep. Send
 You can send `shutdown` to this topic. It will try to shut down the computer. The way it is done depends on the user who ran the program. If the program is run by `root` the computer will shut down, but if it is run by an ordinary user the computer will not shut down if there is another user who logged in. Sending some other value but `shutdown` will do nothing.
 
 You can send `displaysleep` to this topic. It will turn off the display. Sending some other value will do nothing.
+
+You can send `lock` to this topic. It will lock the system. Sending some other value will do nothing.
 
 
 ## Building
