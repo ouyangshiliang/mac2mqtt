@@ -1,0 +1,51 @@
+script:
+  macmini_sleep:
+    icon: mdi:laptop
+    sequence:
+      - service: mqtt.publish
+        data:
+          topic: "iot/macmini/command/sleep"
+          payload: "sleep"
+
+  macmini_shutdown:
+    icon: mdi:laptop
+    sequence:
+      - service: mqtt.publish
+        data:
+          topic: "iot/macmini/command/shutdown"
+          payload: "shutdown"
+
+  macmini_displaysleep:
+    icon: mdi:laptop
+    sequence:
+      - service: mqtt.publish
+        data:
+          topic: "iot/macmini/command/displaysleep"
+          payload: "displaysleep"
+
+mqtt:
+  sensor:
+  - name: 'macmini_alive'
+    state_topic: 'iot/macmini/status/alive'
+    icon: 'mdi:laptop'
+
+
+  switch:
+  - name: macmini_mute
+    icon: mdi:volume-mute
+    state_topic: "iot/macmini/status/mute"
+    command_topic: "iot/macmini/command/mute"
+    payload_on: "true"
+    payload_off: "false"
+  - name: macmini_lock
+    icon: mdi:laptop
+    state_topic: "iot/macmini/status/lock"
+    command_topic: "iot/macmini/command/lock"
+    payload_on: "true"
+    payload_off: "false"
+
+  number:
+  - name: macmini_volume
+    icon: mdi:volume-medium
+    state_topic: "iot/macmini/status/volume"
+    command_topic: "iot/macmini/command/volume"
