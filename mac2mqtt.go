@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -32,7 +32,13 @@ type config struct {
 
 func (c *config) getConfig() *config {
 
-	configContent, err := ioutil.ReadFile("mac2mqtt.yaml")
+	ex, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	exPath := filepath.Dir(ex)
+
+	configContent, err := os.ReadFile(exPath + "/mac2mqtt.yaml")
 	if err != nil {
 		log.Fatal("No config file provided")
 	}
